@@ -26,14 +26,14 @@ uniform int Mode <
 
 uniform int Formula <
     ui_type    = "combo";
-    ui_items   = "Power-based\0Adjustable SmoothStep\0Logistic\0";
+    ui_items   = "Power-based\0Adjustable SmoothStep\0Logistic\0Hermite\0Perceptual (Reinhard)\0ACES\0Catmull-Rom\0Exponential\0Uncharted2\0Parametric Sigmoid\0";
     ui_tooltip = "The S-Curve formula you want to use (In order of simplest -> complex)";
-> = 1;
+> = 0;
 
 uniform float Contrast < __UNIFORM_SLIDER_FLOAT1
 	ui_min = -1.0; ui_max = 1.0;
 	ui_tooltip = "Amount of contrast";
-> = 0.65;
+> = 0.0;
 
 
 
@@ -91,9 +91,154 @@ float3 SCurve_Logistic(float3 x, float contrast)
 }
 
 
-// ----------------------------------------------------
-// ------------------ CURVE PASS ----------------------
-// ----------------------------------------------------
+float3 SCurve_Hermite(float3 x, float contrast) 
+{
+    float mag = length(x);
+    float x0  = saturate(mag);
+    
+    float t = x0;
+    float strength = contrast * 2.0;
+    
+    // Split at midpoint with controllable transition
+    float curved;
+    if (t < 0.5) curved = 0.5 * pow(2.0 * t, 1.0 + strength);
+    else         curved = 1.0 - 0.5 * pow(2.0 * (1.0 - t), 1.0 + strength);
+    
+    return Apply_Vector_Curve(x, curved, mag);
+}
+
+
+float3 SCurve_Perceptual(float3 x, float contrast) 
+{
+    float mag = length(x);
+    float x0  = saturate(mag);
+    
+    // Toe and shoulder control
+    float toe      = 0.2 * contrast;
+    float shoulder = 0.8 + (0.2 * (1.0 - contrast));
+    
+    float curved;
+    if (x0 < toe) 
+    {
+        curved = (x0 * x0) / (2.0 * toe);
+    } 
+    else if (x0 > shoulder) 
+    {
+        float excess = x0 - shoulder;
+        curved       = shoulder + excess / (1.0 + excess);
+    } 
+    else 
+    {
+        curved = x0;
+    }
+    
+    return Apply_Vector_Curve(x, curved, mag);
+}
+
+
+float3 SCurve_ACES(float3 x, float contrast) 
+{
+    float mag = length(x);
+    float x0  = saturate(mag);
+    
+    // ACES approximation with contrast control
+    float a = 2.51 * contrast;
+    float b = 0.03;
+    float c = 2.43 * contrast;
+    float d = 0.59;
+    float e = 0.14;
+    
+    float curved = saturate((x0 * (a * x0 + b)) / (x0 * (c * x0 + d) + e));
+    
+    return Apply_Vector_Curve(x, curved, mag);
+}
+
+
+float3 SCurve_CatmullRom(float3 x, float contrast) 
+{
+    float mag = length(x);
+    float x0  = saturate(mag);
+    
+    // Control points based on contrast
+    float p0 = 0.0;
+    float p1 = 0.5 - contrast * 0.2;
+    float p2 = 0.5 + contrast * 0.2;
+    float p3 = 1.0;
+    
+    float t  = x0;
+    float t2 = t * t;
+    float t3 = t2 * t;
+    
+    float curved = 0.5 * (
+        (2.0 * p1) +
+        (-p0 + p2) * t +
+        (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 +
+        (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3
+    );
+    
+    return Apply_Vector_Curve(x, curved, mag);
+}
+
+
+float3 SCurve_Exponential(float3 x, float contrast) 
+{
+    float mag = length(x);
+    float x0  = saturate(mag);
+    
+    float k = contrast * 3.0;
+    
+    // Toe (shadows)
+    float toe = 1.0 - exp(-k * x0);
+    
+    // Shoulder (highlights)
+    float shoulder = exp(-k * (1.0 - x0));
+    
+    // Blend based on input value
+    float curved = lerp(toe, 1.0 - shoulder, x0);
+    
+    return Apply_Vector_Curve(x, curved, mag);
+}
+
+
+float3 SCurve_Uncharted2(float3 x, float contrast) 
+{
+    float mag = length(x);
+    float x0  = saturate(mag);
+    
+    float A = 0.15 * contrast;
+    float B = 0.50;
+    float C = 0.10;
+    float D = 0.20 * contrast;
+    float E = 0.02;
+    float F = 0.30;
+    
+    float curved = ((x0 * (A * x0 + C * B) + D * E) / (x0 * (A * x0 + B) + D * F)) - E / F;
+    curved       = saturate(curved);
+    
+    return Apply_Vector_Curve(x, curved, mag);
+}
+
+
+float3 SCurve_Parametric(float3 x, float contrast) 
+{
+    float mag = length(x);
+    float x0  = saturate(mag);
+    
+    float slope             = 1.0 + contrast * 4.0;
+    float toe_strength      = 0.5;
+    float shoulder_strength = 0.5;
+    
+    float curved;
+    if (x0 < 0.5) curved = pow(2.0 * x0, slope * toe_strength) * 0.5;
+    else          curved = 1.0 - pow(2.0 * (1.0 - x0), slope * shoulder_strength) * 0.5;
+    
+    return Apply_Vector_Curve(x, curved, mag);
+}
+
+
+//***********************************//
+//           CURVE PASS              //
+//***********************************//
 float4 ContrastPass(float4 v_pos : SV_POSITION, float2 tex_coord : TEXCOORD) : SV_TARGET 
 {
     float4 colour_input   = tex2D(ReShade::BackBuffer, tex_coord);
@@ -103,7 +248,7 @@ float4 ContrastPass(float4 v_pos : SV_POSITION, float2 tex_coord : TEXCOORD) : S
 
 
     // ----------- Separate Luma & Chroma ---------------
-    float luma    = dot(luma_coeff, colour_input.rgb);
+    float  luma   = dot(luma_coeff, colour_input.rgb);
     float3 chroma = colour_input.rgb - luma;
 
 
@@ -116,7 +261,13 @@ float4 ContrastPass(float4 v_pos : SV_POSITION, float2 tex_coord : TEXCOORD) : S
     if (Formula == 0) contrast_input = SCurve_Power(contrast_input, 0.5);        
     if (Formula == 1) contrast_input = SCurve_SmoothStep(contrast_input, contrast_blend); 
     if (Formula == 2) contrast_input = SCurve_Logistic(contrast_input, contrast_blend);  
-    
+    if (Formula == 3) contrast_input = SCurve_Hermite(contrast_input, contrast_blend); 
+    if (Formula == 4) contrast_input = SCurve_Perceptual(contrast_input, contrast_blend); 
+    if (Formula == 5) contrast_input = SCurve_ACES(contrast_input, contrast_blend); 
+    if (Formula == 6) contrast_input = SCurve_CatmullRom(contrast_input, contrast_blend); 
+    if (Formula == 7) contrast_input = SCurve_Exponential(contrast_input, contrast_blend); 
+    if (Formula == 8) contrast_input = SCurve_Uncharted2(contrast_input, contrast_blend); 
+    if (Formula == 9) contrast_input = SCurve_Parametric(contrast_input, contrast_blend); 
 
     // ----------------- Join Luma & Chroma ---------------
     if (Mode == 0) 
@@ -139,9 +290,9 @@ float4 ContrastPass(float4 v_pos : SV_POSITION, float2 tex_coord : TEXCOORD) : S
 }
 
 
-// -------------------------------------
-// ----------- TECHNIQUES --------------
-// -------------------------------------
+//***********************************//
+//           TECHNIQUES              //
+//***********************************//
 technique Contrast 
 {
     pass 
