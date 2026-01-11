@@ -1,22 +1,22 @@
-// ▀█████████▄    ▄▄▄▄███▄▄▄▄      ▄███████▄ ▄██   ▄     ▄▄▄▄███▄▄▄▄   
-//   ███    ███ ▄██▀▀▀███▀▀▀██▄   ███    ███ ███   ██▄ ▄██▀▀▀███▀▀▀██▄ 
-//   ███    ███ ███   ███   ███   ███    ███ ███▄▄▄███ ███   ███   ███ 
-//  ▄███▄▄▄██▀  ███   ███   ███   ███    ███ ▀▀▀▀▀▀███ ███   ███   ███ 
-// ▀▀███▀▀▀██▄  ███   ███   ███ ▀█████████▀  ▄██   ███ ███   ███   ███ 
-//   ███    ██▄ ███   ███   ███   ███        ███   ███ ███   ███   ███ 
-//   ███    ███ ███   ███   ███   ███        ███   ███ ███   ███   ███ 
-// ▄█████████▀   ▀█   ███   █▀   ▄████▀       ▀█████▀   ▀█   ███   █▀  
-//
-//  CONTRAST CURVES
-//  ---------------
-// 
-
-#include "ReShade.fxh"
-#include "ReShadeUI.fxh"
-
-#define PI 3.14159265358979323846f
+// -----------------------------------------------------------//
+//                      CONTRAST CURVES                       //
+// written by Mitch J. - https://github.com/bumpymap          //
+//                                                            //
+// Uses S-Curves to improve contrast without affecting        //
+// shadows or clipping highlights                             //
+//                                                            //
+// Inspired by SweetFX - https://github.com/CeeJayDK/SweetFX  //
+//------------------------------------------------------------//
 
 
+#include "Include/ReShade.fxh"
+#include "Include/ReShadeUI.fxh"
+
+
+
+//**************************************************//
+//                  UNIFORMS                        //
+//**************************************************//
 
 uniform int Mode < 
     ui_type    = "combo";
@@ -37,7 +37,10 @@ uniform float Contrast < __UNIFORM_SLIDER_FLOAT1
 
 
 
-// Helper function
+//**************************************************//
+//                  FUNCTIONS                       //
+//**************************************************//
+
 float3 Apply_Vector_Curve(float3 v, float curved_mag, float mag) 
 {
     float inv_mag = (mag > 1e-5) ? (curved_mag / mag) : 0.0;
@@ -187,11 +190,9 @@ float3 SCurve_Exponential(float3 x, float contrast)
     
     float k = contrast * 3.0;
     
-    // Toe (shadows)
-    float toe = 1.0 - exp(-k * x0);
     
-    // Shoulder (highlights)
-    float shoulder = exp(-k * (1.0 - x0));
+    float toe      = 1.0 - exp(-k * x0);      // Toe (shadows)
+    float shoulder = exp(-k * (1.0 - x0));    // Shoulder (highlights)
     
     // Blend based on input value
     float curved = lerp(toe, 1.0 - shoulder, x0);
@@ -236,10 +237,10 @@ float3 SCurve_Parametric(float3 x, float contrast)
 }
 
 
-//***********************************//
-//           CURVE PASS              //
-//***********************************//
-float4 ContrastPass(float4 v_pos : SV_POSITION, float2 tex_coord : TEXCOORD) : SV_TARGET 
+//**************************************************//
+//                  PASSES                          //
+//**************************************************//
+float4 Contrast_Pass(float4 v_pos : SV_POSITION, float2 tex_coord : TEXCOORD) : SV_TARGET 
 {
     float4 colour_input   = tex2D(ReShade::BackBuffer, tex_coord);
     float3 luma_coeff     = float3(0.2126, 0.7152, 0.0722); 
@@ -269,6 +270,7 @@ float4 ContrastPass(float4 v_pos : SV_POSITION, float2 tex_coord : TEXCOORD) : S
     if (Formula == 8) contrast_input = SCurve_Uncharted2(contrast_input, contrast_blend); 
     if (Formula == 9) contrast_input = SCurve_Parametric(contrast_input, contrast_blend); 
 
+
     // ----------------- Join Luma & Chroma ---------------
     if (Mode == 0) 
     {
@@ -290,14 +292,15 @@ float4 ContrastPass(float4 v_pos : SV_POSITION, float2 tex_coord : TEXCOORD) : S
 }
 
 
-//***********************************//
-//           TECHNIQUES              //
-//***********************************//
+//**************************************************//
+//                  TECHNIQUES                      //
+//**************************************************//
+
 technique Contrast 
 {
     pass 
     {
         VertexShader = PostProcessVS;
-        PixelShader  = ContrastPass;
+        PixelShader  = Contrast_Pass;
     }
 }

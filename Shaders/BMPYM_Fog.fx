@@ -11,8 +11,8 @@
 //  ---------------
 // 
 
-#include "ReShade.fxh"
-#include "ReShadeUI.fxh"
+#include "Include/ReShade.fxh"
+#include "Include/ReShadeUI.fxh"
 
 
 uniform float3 Fog_Colour <
@@ -83,17 +83,7 @@ technique Fog <ui_label = "Fog"; ui_tooltip = "(LDR) Applies a color to distant 
 {
     pass 
     {
-        //RenderTarget = render_tex;
-
         VertexShader = PostProcessVS;
         PixelShader  = PS_Fog_Pass;
     }
-
-    // pass End 
-    // {
-    //     RenderTarget = buffer_tex;
-
-    //     VertexShader = PostProcessVS;
-    //     PixelShader  = PS_End_Pass;
-    // }
 }
