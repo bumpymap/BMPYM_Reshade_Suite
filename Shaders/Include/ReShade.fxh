@@ -112,8 +112,9 @@ namespace ReShade
 
 		return depth;
 	}
+
 	float3 GetScreenSpaceNormal(float2 texcoord) {
-		float3 offset = float3(BUFFER_PIXEL_SIZE, 0.0);
+		float3 offset    = float3(BUFFER_PIXEL_SIZE, 0.0);
 		float2 posCenter = texcoord.xy;
 		float2 posNorth  = posCenter - offset.zy;
 		float2 posEast   = posCenter + offset.xz;

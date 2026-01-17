@@ -1,15 +1,19 @@
 // -----------------------------------------------------------//
 //                          GAMMA                             //
-// written by Mitch J. - https://github.com/bumpymap          //
 //                                                            //
-// Simple gamme adjustment                                    //
+// Simple gamma adjustment                                    //
 //------------------------------------------------------------//
 
 #include "Include/ReShade.fxh"
 #include "Include/ReShadeUI.fxh"
 
 
-uniform float u_gamma <
+
+//**************************************************//
+//                  UNIFORMS                        //
+//**************************************************//
+
+uniform float _Gamma <
     ui_min = 0.0f; ui_max = 5.0f;
     ui_label   = "Gamma";
     ui_type    = "drag";
@@ -21,11 +25,11 @@ uniform float u_gamma <
 //                  PASSES                          //
 //**************************************************//
 
-float4 PS_Gamma(float4 v_pos : SV_POSITION, float2 tex_coord : TEXCOORD) : SV_TARGET
+float4 PS_Gamma(float4 position : SV_POSITION, float2 texcoord : TEXCOORD) : SV_TARGET
 {
-    float4 colour_input = saturate(tex2D(ReShade::BackBuffer, tex_coord).rgba);
+    float4 sColour = saturate(tex2D(ReShade::BackBuffer, texcoord).rgba);
 
-    return saturate(pow(abs(colour_input), u_gamma));
+    return saturate(pow(abs(sColour), _Gamma));
 }
 
 
