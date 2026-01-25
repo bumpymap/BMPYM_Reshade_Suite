@@ -4,19 +4,19 @@
 // Simple gamma adjustment                                    //
 //------------------------------------------------------------//
 
-#include "Include/ReShade.fxh"
+//--------------------------------//
+#include "Include/BMPYM_Common.fxh"
 #include "Include/ReShadeUI.fxh"
-
+//--------------------------------//
 
 
 //**************************************************//
 //                  UNIFORMS                        //
 //**************************************************//
 
-uniform float _Gamma <
+uniform float _Gamma < __UNIFORM_SLIDER_FLOAT1
     ui_min = 0.0f; ui_max = 5.0f;
     ui_label   = "Gamma";
-    ui_type    = "drag";
     ui_tooltip = "Adjust gamma correction";
 > = 1.0f;
 
@@ -37,7 +37,7 @@ float4 PS_Gamma(float4 position : SV_POSITION, float2 texcoord : TEXCOORD) : SV_
 //                  TECHNIQUES                      //
 //**************************************************//
 
-technique Gamma < ui_label = "Gamma"; ui_tooltip = "(LDR) Adjusts the gamma correction of the screen"; > 
+technique Gamma < ui_label = "Gamma"; ui_tooltip = "Adjusts the gamma correction of the screen"; > 
 {
     pass 
     {
