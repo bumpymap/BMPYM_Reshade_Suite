@@ -22,7 +22,7 @@ uniform float _Gamma < __UNIFORM_SLIDER_FLOAT1
 
 
 //**************************************************//
-//                  PASSES                          //
+//                 PIXEL SHADERS                    //
 //**************************************************//
 
 float4 PS_Gamma(float4 position : SV_POSITION, float2 texcoord : TEXCOORD) : SV_TARGET

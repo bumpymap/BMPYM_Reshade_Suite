@@ -2,7 +2,7 @@
 //                          Better CAS                             //
 //                                                                 //
 //  FSR - [CAS] CONTRAST ADAPTIVE SHARPENING                       //
-//      based on AMD FidelityFX CAS implementation                 //
+//      Based on AMD FidelityFX CAS implementation                 //
 //  https://github.com/GPUOpen-Effects/FidelityFX-CAS/blob/master  // 
 //-----------------------------------------------------------------//
 
@@ -10,8 +10,6 @@
 #include "Include/BMPYM_Common.fxh"
 #include "Include/ReShadeUI.fxh"
 //--------------------------------//
-
-
 
 //**************************************************//
 //                  UNIFORMS                        //
@@ -135,7 +133,7 @@ float GetDepthWeight(float2 texcoord)
 
 
 //**************************************************//
-//                  PASSES                          //
+//                 PIXEL SHADERS                    //
 //**************************************************//
 
 float3 PS_CASPass(float4 position : SV_POSITION, float2 texcoord : TEXCOORD) : SV_TARGET
@@ -209,13 +207,13 @@ float3 PS_CASPass(float4 position : SV_POSITION, float2 texcoord : TEXCOORD) : S
 //**************************************************//
 
 technique BMPYM_BCAS < 
-    ui_label   = "Better CAS";
+    ui_label   = "BMYPM BCAS";
     ui_tooltip =        
         "                     BMPYM - B(etter)CAS                      \n"
         "_____________________________________________________________\n"
         "\n"
-        "This is an improved implementation of AMD FidelityFX CAS.    \n"
-        "It is essentially CAS with added depth awareness.            \n"
+        "An improved implementation of AMD FidelityFX CAS -   \n"
+        "CAS with added depth awareness.                              \n"
         "\n"
         "_____________________________________________________________";
 >

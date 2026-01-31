@@ -5,12 +5,11 @@
 //		https://github.com/iryoku/smaa 								 //
 //-------------------------------------------------------------------//
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //_____________________________________________________________/\_______________________________________________________________
 //==============================================================================================================================
-//                                    Enhanced Subpixel Morphological Anti-Aliasing Portion
+//                                   Enhanced Subpixel Morphological Anti-Aliasing Component
 //==============================================================================================================================
 
 #if !defined(SMAA_PRESET_LOW) && !defined(SMAA_PRESET_MEDIUM) && !defined(SMAA_PRESET_HIGH) && !defined(SMAA_PRESET_ULTRA)
@@ -149,7 +148,6 @@ uniform int _DebugOutput < __UNIFORM_COMBO_INT1
 #include "Include/BMPYM_Common.fxh"
 //--------------------------------//
 
-
 //**************************************************//
 //                   TEXTURES                       //
 //**************************************************//
@@ -260,7 +258,7 @@ float3 SMAANeighborhoodBlendingWrapPS(float4 position : SV_POSITION, float2 texc
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //_____________________________________________________________/\_______________________________________________________________
 //==============================================================================================================================
-//                                            Fast Approximate Anti-Aliasing Portion
+//                                           Fast Approximate Anti-Aliasing Component
 //==============================================================================================================================
 
 //**************************************************//
@@ -324,9 +322,9 @@ uniform float _EdgeThresholdMin < __UNIFORM_SLIDER_FLOAT1
 	#undef FXAA_LINEAR_LIGHT
 #endif
 
-//------------------//
+//-----------------//
 #include "FXAA.fxh"
-//------------------//
+//-----------------//
 
 sampler FXAATexture
 {
@@ -348,7 +346,6 @@ sampler FXAATexture
 float4 FXAALumaPass(float4 position : SV_POSITION, float2 texcoord : TEXCOORD) : SV_TARGET
 {
 	float4 sColour = tex2D(ReShade::BackBuffer, texcoord.xy);
-	//sColour.a      = sqrt(dot(sColour.rgb * sColour.rgb, float3(0.299, 0.587, 0.114)));
 	sColour.a      = sqrt(Common::Luminance(sColour.rgb * sColour.rgb));
 
 	return sColour;
@@ -385,14 +382,14 @@ float4 FXAAPixelShader(float4 position : SV_POSITION, float2 texcoord : TEXCOORD
 //**************************************************//
 
 technique BMPYM_BFSMAA < 
-    ui_label   = "Better FSMAA";
+    ui_label   = "BMPYM BFSMAA";
     ui_tooltip =        
         "                    BMPYM - B(etter)FSMAA                    \n"
         "_____________________________________________________________\n"
         "\n"
-        "This is a high quality anti-aliasing solution.               \n"
-        "It combines SMAA and FXAA in one shader.                     \n"
-		"Best combined with a sharpening shader as the image may blur.\n"
+        "A high quality anti-aliasing solution, combining SMAA & FXAA \n"
+        "in one shader.                     						  \n"
+		"Best combined with some sharpening  as the image may blur.	  \n"
         "\n"
         "_____________________________________________________________";
 >
